@@ -13,10 +13,10 @@
     "jquery": "^3.5.1",
     "mocha": "^5.2.0",
     "sinon": "^6.3.5",
-    "underscore": "^1.11.0"
+    "underscore": "^1.13.6"
   },
   "scripts": {
-    "start:server": "node server/basic-server.js",
+    "start:server": "nodemon server/basic-server.js",
     "start:client": "npx live-server",
     "test": "mocha server/spec",
     "lint": "eslint ./"
