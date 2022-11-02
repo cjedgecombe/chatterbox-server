@@ -12,7 +12,9 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var requestHandler = function(request, response) {
+var arr = [];
+
+var requestHandler = function (request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -27,36 +29,52 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
-  if (request.url === '/classes/messages') {
-    console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
+  if (request.method === 'GET') {
+    if (request.url === '/classes/messages') {
+      console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
 
-    // The outgoing status.
-    var statusCode = 200;
+      // The outgoing status.
+      var statusCode = 200;
 
-    // See the note below about CORS headers.
+      // See the note below about CORS headers.
+      var headers = defaultCorsHeaders;
+
+      // Tell the client we are sending them plain text.
+      //
+      // You will need to change this if you are sending something
+      // other than plain text, like JSON or HTML.
+      headers['Content-Type'] = 'text/plain';
+
+      // .writeHead() writes to the request line and headers of the response,
+      // which includes the status and all headers.
+      response.writeHead(statusCode, headers);
+
+      // Make sure to always call response.end() - Node may not send
+      // anything back to the client until you do. The string you pass to
+      // response.end() will be the body of the response - i.e. what shows
+      // up in the browser.
+      //
+      // Calling .end "flushes" the response's internal buffer, forcing
+      // node to actually send all the data over to the client.
+      response.end(JSON.stringify([{ username: 'CJ', text: 'Hi', roomname: 'My Room' }]));
+    }
+  } else if (request.method === 'POST') {
+    var statusCode = 201;
     var headers = defaultCorsHeaders;
-
-    // Tell the client we are sending them plain text.
-    //
-    // You will need to change this if you are sending something
-    // other than plain text, like JSON or HTML.
     headers['Content-Type'] = 'text/plain';
-
-    // .writeHead() writes to the request line and headers of the response,
-    // which includes the status and all headers.
     response.writeHead(statusCode, headers);
+    var message = [];
+    request.on('data', (chunk) => message.push(chunk));
+    // request.on('data', (chunk) => console.log(chunk));
+    console.log(message)
+    // console.log(JSON.parse(str));
+    request.on('end', () => {
+      message = Buffer.concat(message).toString();
+      message = JSON.parse(message);
 
-    // Make sure to always call response.end() - Node may not send
-    // anything back to the client until you do. The string you pass to
-    // response.end() will be the body of the response - i.e. what shows
-    // up in the browser.
-    //
-    // Calling .end "flushes" the response's internal buffer, forcing
-    // node to actually send all the data over to the client.
-    response.end(JSON.stringify([{username: 'CJ', text: 'Hi', roomname: 'My Room'}]));
-  } else {
-
-    response.end('Hello, Kevin!');
+    });
+    console.log(JSON.stringify(message));
+    response.end(JSON.stringify(message));
   }
 };
 
