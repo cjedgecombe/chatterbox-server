@@ -12,7 +12,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var arr = [];
+var messagesArr = [];
 
 var requestHandler = function (request, response) {
   // Request and Response come from node's http module.
@@ -29,15 +29,15 @@ var requestHandler = function (request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
-  if (request.method === 'GET') {
-    if (request.url === '/classes/messages') {
+  var headers = defaultCorsHeaders;
+  if (request.url === '/classes/messages') {
+    if (request.method === 'GET') {
       console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
 
       // The outgoing status.
       var statusCode = 200;
 
       // See the note below about CORS headers.
-      var headers = defaultCorsHeaders;
 
       // Tell the client we are sending them plain text.
       //
@@ -56,25 +56,28 @@ var requestHandler = function (request, response) {
       //
       // Calling .end "flushes" the response's internal buffer, forcing
       // node to actually send all the data over to the client.
-      response.end(JSON.stringify([{ username: 'CJ', text: 'Hi', roomname: 'My Room' }]));
-    }
-  } else if (request.method === 'POST') {
-    var statusCode = 201;
-    var headers = defaultCorsHeaders;
-    headers['Content-Type'] = 'text/plain';
-    response.writeHead(statusCode, headers);
-    var message = [];
-    request.on('data', (chunk) => message.push(chunk));
-    // request.on('data', (chunk) => console.log(chunk));
-    console.log(message)
-    // console.log(JSON.parse(str));
-    request.on('end', () => {
-      message = Buffer.concat(message).toString();
-      message = JSON.parse(message);
+      response.end(JSON.stringify(messagesArr));
 
-    });
-    console.log(JSON.stringify(message));
-    response.end(JSON.stringify(message));
+    } else if (request.method === 'POST') {
+      var statusCode = 201;
+      headers['Content-Type'] = 'text/plain';
+      response.writeHead(statusCode, headers);
+      var message = [];
+      request.on('data', (chunk) => {
+        message.push(chunk);
+      });
+
+      request.on('end', () => {
+        message = Buffer.concat(message).toString();
+        message = JSON.parse(message);
+        messagesArr.push(message);
+        response.end();
+      });
+    }
+  } else {
+    var statusCode = 404;
+    response.writeHead(statusCode, headers);
+    response.end();
   }
 };
 
@@ -94,4 +97,5 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
-module.exports = requestHandler;
+// module.exports = requestHandler;
+exports.requestHandler = requestHandler;
