@@ -51,7 +51,7 @@ describe('Node Server Request Listener Function', function() {
 
     // Testing for a newline isn't a valid test
     // TODO: Replace with with a valid test
-    // expect(res._data).to.equal(JSON.stringify('\n'));
+    expect(res._data).to.equal(JSON.stringify(undefined));
     expect(res._ended).to.equal(true);
   });
 
@@ -90,5 +90,60 @@ describe('Node Server Request Listener Function', function() {
     expect(res._responseCode).to.equal(404);
     expect(res._ended).to.equal(true);
   });
+
+  it('Should expect status code of 400 when given an array or other non objects', function() {
+    var stubMsg = ['Jono', 'Do my bidding'];
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+    handler.requestHandler(req, res);
+    expect(res._responseCode).to.equal(400);
+
+    var stubMsg = true;
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+    handler.requestHandler(req, res);
+    expect(res._responseCode).to.equal(400);
+  });
+
+  it('Should return as many messages that were posted', function() {
+    var stubMsg = {
+      username: 'CJ',
+      text: 'Hi CJ'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+    handler.requestHandler(req, res);
+
+    var stubMsg = {
+      username: 'Kevin',
+      text: 'Hi Kevin'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+    handler.requestHandler(req, res);
+
+    // GET
+    req = new stubs.request('/classes/messages', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    var messages = JSON.parse(res._data);
+    // Expect there to be 4 total messages to account for
+    // POST in other tests above
+    expect(messages.length).to.equal(4);
+  });
+
+  it('Should return 418 error if asked to brew coffee in the text', function() {
+    var stubMsg = {
+      username: 'CJ',
+      text: `I DRINK BREW COFFEE FOR DINNER WITH MY MOM`
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+    handler.requestHandler(req, res);
+    expect(res._responseCode).to.equal(418);
+  });
+
 
 });

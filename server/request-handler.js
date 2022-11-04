@@ -59,9 +59,7 @@ var requestHandler = function (request, response) {
       response.end(JSON.stringify(messagesArr));
 
     } else if (request.method === 'POST') {
-      var statusCode = 201;
       headers['Content-Type'] = 'text/plain';
-      response.writeHead(statusCode, headers);
       var message = [];
       request.on('data', (chunk) => {
         message.push(chunk);
@@ -70,7 +68,17 @@ var requestHandler = function (request, response) {
       request.on('end', () => {
         message = Buffer.concat(message).toString();
         message = JSON.parse(message);
-        messagesArr.push(message);
+        if (typeof message !== 'object' || Array.isArray(message)) {
+          var statusCode = 400;
+        } else if (message.text.toLowerCase().includes('brew coffee')) {
+          var statusCode = 418;
+          response.writeHead(statusCode, headers);
+          response.end("I'm a teapot :)");
+        } else {
+          var statusCode = 201;
+          messagesArr.push(message);
+        }
+        response.writeHead(statusCode, headers);
         response.end();
       });
     }
