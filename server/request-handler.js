@@ -29,10 +29,16 @@ var requestHandler = function (request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+  var defaultCorsHeaders = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'access-control-allow-headers': 'content-type, accept, authorization',
+    'access-control-max-age': 10 // Seconds.
+  };
   var headers = defaultCorsHeaders;
   if (request.url === '/classes/messages') {
-    if (request.method === 'GET') {
-      console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
+    console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
+    if (request.method === 'GET' || request.method === 'OPTIONS') {
 
       // The outgoing status.
       var statusCode = 200;
@@ -73,7 +79,7 @@ var requestHandler = function (request, response) {
         } else if (message.text.toLowerCase().includes('brew coffee')) {
           var statusCode = 418;
           response.writeHead(statusCode, headers);
-          response.end("I'm a teapot :)");
+          response.end(`I'm a teapot :)`);
         } else {
           var statusCode = 201;
           messagesArr.push(message);
@@ -81,6 +87,12 @@ var requestHandler = function (request, response) {
         response.writeHead(statusCode, headers);
         response.end();
       });
+    } else if (request.method === 'OPTIONS') {
+      var statusCode = 200;
+      headers['Content-Type'] = 'text/plain';
+      response.writeHead(statusCode, headers);
+      response.end();
+
     }
   } else {
     var statusCode = 404;
@@ -98,12 +110,12 @@ var requestHandler = function (request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept, authorization',
-  'access-control-max-age': 10 // Seconds.
-};
+// var defaultCorsHeaders = {
+//   'access-control-allow-origin': '*',
+//   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+//   'access-control-allow-headers': 'content-type, accept, authorization',
+//   'access-control-max-age': 10 // Seconds.
+// };
 
 // module.exports = requestHandler;
 exports.requestHandler = requestHandler;
