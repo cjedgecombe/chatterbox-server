@@ -14,6 +14,8 @@ this file and include it in basic-server.js so that it actually works.
 
 var messagesArr = [];
 
+var requestSubmissionTimes = [];
+
 var requestHandler = function (request, response) {
   // Request and Response come from node's http module.
   //
@@ -38,7 +40,7 @@ var requestHandler = function (request, response) {
   var headers = defaultCorsHeaders;
   if (request.url === '/classes/messages') {
     console.log(123, 'Serving request type ' + request.method + ' for url ' + request.url);
-    if (request.method === 'GET' || request.method === 'OPTIONS') {
+    if (request.method === 'GET') {
 
       // The outgoing status.
       var statusCode = 200;
@@ -87,12 +89,39 @@ var requestHandler = function (request, response) {
         response.writeHead(statusCode, headers);
         response.end();
       });
+
     } else if (request.method === 'OPTIONS') {
       var statusCode = 200;
       headers['Content-Type'] = 'text/plain';
       response.writeHead(statusCode, headers);
       response.end();
 
+    } else if (request.method === 'DELETE') {
+      var message = [];
+      request.on('data', (chunk) => {
+        message.push(chunk);
+      });
+
+      request.on('end', () => {
+        message = Buffer.concat(message).toString();
+        message = JSON.parse(message);
+        var messagesFound = false;
+        for (var i = 0; i < messagesArr.length; i++) {
+          if ((messagesArr[i].username === message.username) && (messagesArr[i].text === message.text)) {
+            messagesArr.splice(i, 1);
+            messagesFound = true;
+            break;
+          }
+        }
+
+        if (messagesFound === true) {
+          var statusCode = 200;
+        } else {
+          var statusCode = 404;
+        }
+        response.writeHead(statusCode, headers);
+        response.end();
+      });
     }
   } else {
     var statusCode = 404;
